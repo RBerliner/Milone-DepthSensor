@@ -30,7 +30,6 @@ ReactESP app([]() {
   // Create the global SensESPApp() object.
   sensesp_app = builder.set_hostname("milone")
                     ->set_sk_server("192.168.0.1", 3000)
-                    ->set_wifi("freeboard", "freeboard")
                     ->set_standard_sensors()
                     ->get_app();
 
@@ -53,7 +52,7 @@ const char *sk_path = "tanks.freshWater.starboard.currentLevel";
 
 const char *analog_in_config_path = "/freshWaterTank_starboard/analogin";
 const char *linear_config_path = "/freshWaterTank_starboard/linear";
-// const char *analog_ave_samples = "/freshWaterTank_starboard/samples";
+const char *analog_ave_samples = "/freshWaterTank_starboard/samples";
 
 // Create a sensor that is the source of our data, that will be read every 500 ms.
 // It's a Milone depth sensor that's connected to the ESP's AnalogIn pin.
@@ -77,15 +76,15 @@ auto *pAnalogInput = new AnalogInput(pin, read_delay, analog_in_config_path);
 
 const float multiplier = 0.001468;
 const float offset = -0.503;
-//const float scale = 1.0;
+const float scale = 1.0;
 
 // Wire up the output of the analog input to the Linear transform,
 // and then output the results to the SignalK server.
 
 pAnalogInput->connectTo(new Linear(multiplier, offset, linear_config_path))
+            ->connectTo(new MovingAverage(10, scale, analog_ave_samples))
             ->connectTo(new SKOutputNumber(sk_path));
 
-//             ->connectTo(new MovingAverage(10, scale, analog_ave_samples))
 
 // Start the SensESP application running
 sensesp_app->enable();
