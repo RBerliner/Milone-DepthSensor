@@ -6,9 +6,42 @@
 #include "transforms/linear.h"
 #include "signalk/signalk_output.h"
 #include "transforms/moving_average.h"
+#include "transforms/VoltageDividerR1.h"
+#include "transforms/AnalogVoltage.h"
+#include "transforms/CurveInterpolator.h"
 
+class ETapeInterpreter : public CurveInterpolator {
 
-// SensESP builds upon the ReactESP framework. Every ReactESP application
+    public:
+        ETapeInterpreter(String config_path="") :
+           CurveInterpolator(NULL, config_path ) {
+
+          // Populate a lookup table tp translate the ohm values returned by
+          // our temperature sender to degrees Kelvin
+          clearSamples();
+          // addSample(CurveInterpolator::Sample(knownOhmValue, knownKelvin));
+          addSample(CurveInterpolator::Sample(388., 8.5));
+          addSample(CurveInterpolator::Sample(390.,8.3));
+          addSample(CurveInterpolator::Sample(400, 8.15));
+          addSample(CurveInterpolator::Sample(436., 8.0));
+          addSample(CurveInterpolator::Sample(457., 7.75));
+          addSample(CurveInterpolator::Sample(511., 7.25));
+          addSample(CurveInterpolator::Sample(563., 6.75));
+          addSample(CurveInterpolator::Sample(590., 6.3));
+          addSample(CurveInterpolator::Sample(654., 5.8));
+          addSample(CurveInterpolator::Sample(757., 5.15));
+          addSample(CurveInterpolator::Sample(823., 4.6));
+          addSample(CurveInterpolator::Sample(872., 4.2));
+          addSample(CurveInterpolator::Sample(953., 3.6));
+          addSample(CurveInterpolator::Sample(1036., 3.05));
+          addSample(CurveInterpolator::Sample(1112., 2.5));
+          addSample(CurveInterpolator::Sample(1155., 2.1));
+          addSample(CurveInterpolator::Sample(1221., 1.7));
+          addSample(CurveInterpolator::Sample(1329., 1.3));
+          addSample(CurveInterpolator::Sample(1387., 1.0));
+          addSample(CurveInterpolator::Sample(1450., 1.0));
+        }
+};// SensESP builds upon the ReactESP framework. Every ReactESP application
 // defines an "app" object vs defining a "main()" method.
 ReactESP app([]() {
 
@@ -27,7 +60,10 @@ ReactESP app([]() {
   // Create a builder object
   SensESPAppBuilder builder;
 
-  // Create the global SensESPApp() object.
+  // Create the global SensESPApp() object. If you add the line ->set_wifi("your ssid", "your password") you can specify
+  // the wifi parameters in the builder. If you do not do that, the SensESP device wifi configuration hotspot will appear and you can use a web 
+  // browser pointed to 182.168.4.1 to configure the wifi parameters.
+
   sensesp_app = builder.set_hostname("milone")
                     ->set_sk_server("192.168.0.1", 3000)
                     ->set_standard_sensors()
@@ -37,7 +73,6 @@ ReactESP app([]() {
 // The "SignalK path" identifies this sensor to the SignalK server. Leaving
 // this blank would indicate this particular sensor (or transform) does not
 // broadcast SignalK data.
-const char *sk_path = "tanks.freshWater.starboard.currentLevel";
 
 // The "Configuration path" is combined with "/config" to formulate a URL
 // used by the RESTful API for retrieving or setting configuration data.
@@ -47,11 +82,8 @@ const char *sk_path = "tanks.freshWater.starboard.currentLevel";
 // that indicates this sensor or transform does not have any
 // configuration to save, or that you're not interested in doing
 // run-time configuration.
-//const char* analog_in_config_path = "/indoor_illumination/analog_in";
-//const char* linear_config_path = "/indoor_illumination/linear";
 
 const char *analog_in_config_path = "/freshWaterTank_starboard/analogin";
-const char *linear_config_path = "/freshWaterTank_starboard/linear";
 const char *analog_ave_samples = "/freshWaterTank_starboard/samples";
 
 // Create a sensor that is the source of our data, that will be read every 500 ms.
@@ -65,26 +97,39 @@ uint read_delay = 500;
 
 auto *pAnalogInput = new AnalogInput(pin, read_delay, analog_in_config_path);
 
-// A Linear transform takes its input, multiplies it by the multiplier, then adds the offset,
-// to calculate its output. In this example, we want to see the final output presented
-// as a percentage, where dark = 0% and bright = 100%. To get a percentage, we use this formula:
-// sensor output * (100 / 730) - 16.44 = output (a percentage from 0 to 100).
-// Dark = 120 * (100 / 730) + (-16.44) = 0%
-// Bright = 850 * (100 / 730) + (-16.44) = 100%
-//const float multiplier = 0.137; // 100% divided by 730 = 0.137 "percent per analogRead() unit"
-//const float offset = -16.44;
+// comment out the following line to suppress the output of the raw ADC measurement values.
+pAnalogInput->connectTo(new SKOutputNumber("freshwaterTank_starboard/ADC"));
 
-const float multiplier = 0.001468;
-const float offset = -0.503;
+// Comment out the following 2 lines to suppress the output of the ADC measurement in volts.
+pAnalogInput->connectTo(new AnalogVoltage(1.0, 1.0, 0))
+            ->connectTo(new SKOutputNumber("freshwaterTank_starboard/volts"));
+
+// The Milone depth sensor is wired as a voltage divider with Vin connected to the sensor, 
+// a variable resistor. The sensor is then connected to R2, a fixed resistor then connected to gnd.
+// The voltrage across the fixed resistor is measured by the MCU analog input ADC.
+
+// A VoltageDeviderR1 transform is used to extract the Milone sensor resistance from the data.
+
 const float scale = 1.0;
+const float Vin = 5.0;
+const float R2 = 100;
 
-// Wire up the output of the analog input to the Linear transform,
+// Wire up the output of the analog input to the VoltageDividerR1 transform.
 // and then output the results to the SignalK server.
 
-pAnalogInput->connectTo(new Linear(multiplier, offset, linear_config_path))
-            ->connectTo(new MovingAverage(10, scale, analog_ave_samples))
-            ->connectTo(new SKOutputNumber(sk_path));
+// Comment out the following 3 lines to suppress the output of the eTape sensor resistance.
+pAnalogInput->connectTo(new AnalogVoltage(1.0, 1.0, 0.))
+            ->connectTo(new VoltageDividerR1(R2, Vin, "freshwaterTank_starboard/divider"))
+            ->connectTo(new SKOutputNumber("tanks.freshwater.starboard.R1"));
 
+// Use the ETapeInterpolator to output the water level depth in the tank and pass it through
+// the MovingAverage transport before outputting the result.
+
+pAnalogInput->connectTo(new AnalogVoltage(1.0, 1.0, 0.))
+            ->connectTo(new VoltageDividerR1(R2, Vin, "freshwaterTank_starboard/divider"))
+            ->connectTo(new ETapeInterpreter(""))
+            ->connectTo(new MovingAverage(10, scale, "freshwaterTank_starboard/average"))
+            ->connectTo(new SKOutputNumber("freshwaterTank_starboard/currentLevel"));
 
 // Start the SensESP application running
 sensesp_app->enable();
