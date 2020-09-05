@@ -17,9 +17,9 @@ class ETapeInterpreter : public CurveInterpolator {
            CurveInterpolator(NULL, config_path ) {
 
           // Populate a lookup table tp translate the ohm values returned by
-          // our temperature sender to degrees Kelvin
+          // our level sensor to inches on the sensor scale
           clearSamples();
-          // addSample(CurveInterpolator::Sample(knownOhmValue, knownKelvin));
+          // addSample(CurveInterpolator::Sample(knownOhmValue, sensorHeight));
           addSample(CurveInterpolator::Sample(388., 8.5));
           addSample(CurveInterpolator::Sample(390.,8.3));
           addSample(CurveInterpolator::Sample(400, 8.15));
@@ -62,7 +62,7 @@ ReactESP app([]() {
 
   // Create the global SensESPApp() object. If you add the line ->set_wifi("your ssid", "your password") you can specify
   // the wifi parameters in the builder. If you do not do that, the SensESP device wifi configuration hotspot will appear and you can use a web 
-  // browser pointed to 182.168.4.1 to configure the wifi parameters.
+  // browser pointed to 192.168.4.1 to configure the wifi parameters.
 
   sensesp_app = builder.set_hostname("milone")
                     ->set_sk_server("192.168.0.1", 3000)
@@ -84,7 +84,6 @@ ReactESP app([]() {
 // run-time configuration.
 
 const char *analog_in_config_path = "/freshWaterTank_starboard/analogin";
-const char *analog_ave_samples = "/freshWaterTank_starboard/samples";
 
 // Create a sensor that is the source of our data, that will be read every 500 ms.
 // It's a Milone depth sensor that's connected to the ESP's AnalogIn pin.
@@ -128,7 +127,7 @@ pAnalogInput->connectTo(new AnalogVoltage(1.0, 1.0, 0.))
 pAnalogInput->connectTo(new AnalogVoltage(1.0, 1.0, 0.))
             ->connectTo(new VoltageDividerR1(R2, Vin, "freshwaterTank_starboard/divider"))
             ->connectTo(new ETapeInterpreter(""))
-            ->connectTo(new MovingAverage(10, scale, "freshwaterTank_starboard/average"))
+            ->connectTo(new MovingAverage(10, scale, "freshwaterTank_starboard/samples"))
             ->connectTo(new SKOutputNumber("freshwaterTank_starboard/currentLevel"));
 
 // Start the SensESP application running
