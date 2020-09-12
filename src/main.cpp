@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <EEPROM.h> // Should not be necessary
 
 #include "sensesp_app.h"
 #include "sensesp_app_builder.h"
@@ -39,7 +40,7 @@ class ETapeInterpreter : public CurveInterpolator {
           addSample(CurveInterpolator::Sample(1221., 1.7));
           addSample(CurveInterpolator::Sample(1329., 1.3));
           addSample(CurveInterpolator::Sample(1387., 1.0));
-          addSample(CurveInterpolator::Sample(1450., 1.0));
+          addSample(CurveInterpolator::Sample(1600., 1.0));
         }
 };// SensESP builds upon the ReactESP framework. Every ReactESP application
 // defines an "app" object vs defining a "main()" method.
@@ -65,9 +66,11 @@ ReactESP app([]() {
   // browser pointed to 192.168.4.1 to configure the wifi parameters.
 
   sensesp_app = builder.set_hostname("milone")
-                    ->set_sk_server("192.168.0.1", 3000)
-                    ->set_standard_sensors()
-                    ->get_app();
+                ->set_standard_sensors(IP_ADDRESS)
+                ->set_sk_server("192.168.0.1", 3000) 
+                ->get_app();
+
+  
 
 
 // The "SignalK path" identifies this sensor to the SignalK server. Leaving
@@ -97,11 +100,11 @@ uint read_delay = 500;
 auto *pAnalogInput = new AnalogInput(pin, read_delay, analog_in_config_path);
 
 // comment out the following line to suppress the output of the raw ADC measurement values.
-pAnalogInput->connectTo(new SKOutputNumber("freshwaterTank_starboard/ADC"));
+//pAnalogInput->connectTo(new SKOutputNumber("freshwaterTank_starboard/ADC"));
 
 // Comment out the following 2 lines to suppress the output of the ADC measurement in volts.
-pAnalogInput->connectTo(new AnalogVoltage(1.0, 1.0, 0))
-            ->connectTo(new SKOutputNumber("freshwaterTank_starboard/volts"));
+//pAnalogInput->connectTo(new AnalogVoltage(1.0, 1.0, 0))
+//            ->connectTo(new SKOutputNumber("freshwaterTank_starboard/volts"));
 
 // The Milone depth sensor is wired as a voltage divider with Vin connected to the sensor, 
 // a variable resistor. The sensor is then connected to R2, a fixed resistor then connected to gnd.

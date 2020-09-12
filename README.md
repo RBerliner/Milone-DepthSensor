@@ -55,4 +55,4 @@ The model calculation is shown in the table and in the graph.
 ## Software Implementation
 
 The supporting software for the Milone eTape is based on SensESP and is an extension of the AnalogInput example. Because of the way the sensor has been connected to the ESP8266 
-(measuring the voltage across the fixed reference resistor) it was necessary to add a new class to SensESP, the VoltageDividerR1 class. In addition, code has been added to the AnalogInput example to allow output of intermediate results from the sensor level calculation.
+(measuring the voltage across the fixed reference resistor) it was necessary to add a new class to SensESP, the VoltageDividerR1 class. In addition, code has been added to the AnalogInput example to output intermediate results from the sensor level calculation.
