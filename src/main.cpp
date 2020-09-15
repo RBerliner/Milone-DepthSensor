@@ -7,7 +7,7 @@
 #include "transforms/linear.h"
 #include "signalk/signalk_output.h"
 #include "transforms/moving_average.h"
-#include "transforms/VoltageDividerR1.h"
+#include "transforms/VoltageDivider.h"
 #include "transforms/AnalogVoltage.h"
 #include "transforms/CurveInterpolator.h"
 
