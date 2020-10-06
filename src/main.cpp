@@ -100,11 +100,11 @@ uint read_delay = 500;
 auto *pAnalogInput = new AnalogInput(pin, read_delay, analog_in_config_path);
 
 // comment out the following line to suppress the output of the raw ADC measurement values.
-//pAnalogInput->connectTo(new SKOutputNumber("freshwaterTank_starboard/ADC"));
+//pAnalogInput->connectTo(new SKOutputNumber("tanks.freshWater.starboard.rawADC"));
 
 // Comment out the following 2 lines to suppress the output of the ADC measurement in volts.
 //pAnalogInput->connectTo(new AnalogVoltage(1.0, 1.0, 0))
-//            ->connectTo(new SKOutputNumber("freshwaterTank_starboard/volts"));
+//            ->connectTo(new SKOutputNumber("tanks.freshWater.starboard.voltsADC"));
 
 // The Milone depth sensor is wired as a voltage divider with Vin connected to the sensor, 
 // a variable resistor. The sensor is then connected to R2, a fixed resistor then connected to gnd.
@@ -115,23 +115,24 @@ auto *pAnalogInput = new AnalogInput(pin, read_delay, analog_in_config_path);
 const float scale = 1.0;
 const float Vin = 5.0;
 const float R2 = 100;
+const uint samples = 10;
 
 // Wire up the output of the analog input to the VoltageDividerR1 transform.
 // and then output the results to the SignalK server.
 
 // Comment out the following 3 lines to suppress the output of the eTape sensor resistance.
 pAnalogInput->connectTo(new AnalogVoltage(1.0, 1.0, 0.))
-            ->connectTo(new VoltageDividerR1(R2, Vin, "freshwaterTank_starboard/divider"))
-            ->connectTo(new SKOutputNumber("tanks.freshwater.starboard.R1"));
+            ->connectTo(new VoltageDividerR1(R2, Vin, "/freshWaterTank_starboard/divider"))
+            ->connectTo(new SKOutputNumber("tanks.freshWater.starboard.R1"));
 
 // Use the ETapeInterpolator to output the water level depth in the tank and pass it through
 // the MovingAverage transport before outputting the result.
 
 pAnalogInput->connectTo(new AnalogVoltage(1.0, 1.0, 0.))
-            ->connectTo(new VoltageDividerR1(R2, Vin, "freshwaterTank_starboard/divider"))
+            ->connectTo(new VoltageDividerR1(R2, Vin, ""))
             ->connectTo(new ETapeInterpreter(""))
-            ->connectTo(new MovingAverage(10, scale, "freshwaterTank_starboard/samples"))
-            ->connectTo(new SKOutputNumber("freshwaterTank_starboard/currentLevel"));
+            ->connectTo(new MovingAverage(samples, scale, "/freshWaterTank_starboard/samples"))
+            ->connectTo(new SKOutputNumber("tanks.freshwater.starboard.currentLevel"));
 
 // Start the SensESP application running
 sensesp_app->enable();
