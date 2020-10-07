@@ -42,7 +42,9 @@ class ETapeInterpreter : public CurveInterpolator {
           addSample(CurveInterpolator::Sample(1387., 1.0));
           addSample(CurveInterpolator::Sample(1600., 1.0));
         }
-};// SensESP builds upon the ReactESP framework. Every ReactESP application
+};
+
+// SensESP builds upon the ReactESP framework. Every ReactESP application
 // defines an "app" object vs defining a "main()" method.
 ReactESP app([]() {
 
@@ -92,8 +94,7 @@ const char *analog_in_config_path = "/freshWaterTank_starboard/analogin";
 // It's a Milone depth sensor that's connected to the ESP's AnalogIn pin.
 // The AnalogIn pin on ESP8266 is always A0, but ESP32 has many pins that can be
 // used for AnalogIn, and they're expressed here as the XX in GPIOXX.
-// When it's dark, the sensor's output (as read by analogRead()) is 120, and when
-// it's bright, the output is 850, for a range of 730.
+
 uint8_t pin = A0;
 uint read_delay = 500;
 
