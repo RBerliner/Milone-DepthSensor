@@ -72,12 +72,9 @@ ReactESP app([]() {
                 ->set_sk_server("192.168.0.1", 3000) 
                 ->get_app();
 
-  
-
-
 // The "SignalK path" identifies this sensor to the SignalK server. Leaving
 // this blank would indicate this particular sensor (or transform) does not
-// broadcast SignalK data.
+// broadcast SignalK data. This path should appear as an argument in the SKOutputNumber transform.
 
 // The "Configuration path" is combined with "/config" to formulate a URL
 // used by the RESTful API for retrieving or setting configuration data.
